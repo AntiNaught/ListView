@@ -111,7 +111,7 @@ public class ScrollListView : UIBehaviour
 
     private bool m_DirtyVertical = true;
     private float m_TotalLengthVertical = 0f;
-    public float totalLengthVertical
+    public float totalHeight
     {
         get
         {
@@ -150,17 +150,19 @@ public class ScrollListView : UIBehaviour
 
     private float CalculatePositoinX(float normalizedPositoinX)
     {
-        return 0;
+        float pos = normalizedPositoinX * (totalWidth - m_ViewPortSize.x);
+        return pos;
     }
 
     private float CalculatePositionY(float normalizedPositionY)
     {
-        return 0;
+        float pos = normalizedPositionY * (totalHeight - m_ViewPortSize.y);
+        return pos;
     }
 
     private bool m_DirtyHorizontal = true;
     private float m_TotalLengthHorizontal = 0f;
-    public float totalLengthHorizontal
+    public float totalWidth
     {
         get
         {
