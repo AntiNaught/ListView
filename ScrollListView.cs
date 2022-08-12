@@ -29,20 +29,6 @@ public class ScrollListView : UIBehaviour
         Clamped,
     }
 
-    public enum HorizontalScrollDirection
-    {
-        Disable,
-        LeftToRight,
-        RightToLeft,
-    }
-
-    public enum VerticalScrollDirection
-    {
-        Disable,
-        TopToBottom,
-        BottomToTop,
-    }
-
     /// <summary>
     /// Enum for which behavior to use for scrollbar visibility.
     /// </summary>
@@ -73,6 +59,9 @@ public class ScrollListView : UIBehaviour
     [SerializeField] protected RectOffset m_Padding = new RectOffset();
     [SerializeField] protected Vector2 m_Spacing = Vector2.zero;
 
+    [SerializeField]
+    private GameObject prefab;
+
     /// <summary>
     /// 
     /// </summary>
@@ -82,22 +71,20 @@ public class ScrollListView : UIBehaviour
 
     private Vector2 m_2DPosition = new Vector2();
 
+    [SerializeField]
     private bool m_Horizontal = false;
+    [SerializeField]
     private bool m_Vertical = false;
 
-    private Vector2 m_ViewPortSize = new Vector2();
+    [SerializeField]
+    private RectTransform m_ViewPort;
+
+    private int m_BordIdx_Top = 1;
+    private int m_BordIdx_Bottom = 1;
+    private int m_BordIdx_Left = 1;
+    private int m_BordIdx_Right = 1;
 
     #region Vertical
-    /// <summary>
-    /// 垂直滑动方向设置
-    /// </summary>
-    [SerializeField]
-    private VerticalScrollDirection m_VerticalDirection = VerticalScrollDirection.Disable;
-    public VerticalScrollDirection vertical
-    {
-        get { return m_VerticalDirection; }
-        set { m_VerticalDirection = value; }
-    }
 
     private float CalculateTotalHeight()
     {
@@ -127,16 +114,6 @@ public class ScrollListView : UIBehaviour
     #endregion Vertical
 
     #region Horizontal
-    /// <summary>
-    /// 水平滑动方向设置
-    /// </summary>
-    [SerializeField]
-    private HorizontalScrollDirection m_HorizontalDirection = HorizontalScrollDirection.Disable;
-    public HorizontalScrollDirection horizontal
-    {
-        get { return m_HorizontalDirection; }
-        set { m_HorizontalDirection = value; }
-    }
 
     private float CalculateTotalWidth()
     {
@@ -150,13 +127,13 @@ public class ScrollListView : UIBehaviour
 
     private float CalculatePositoinX(float normalizedPositoinX)
     {
-        float pos = normalizedPositoinX * (totalWidth - m_ViewPortSize.x);
+        float pos = normalizedPositoinX * (totalWidth - m_ViewPort.rect.width);
         return pos;
     }
 
     private float CalculatePositionY(float normalizedPositionY)
     {
-        float pos = normalizedPositionY * (totalHeight - m_ViewPortSize.y);
+        float pos = normalizedPositionY * (totalHeight - m_ViewPort.rect.height);
         return pos;
     }
 
@@ -178,15 +155,29 @@ public class ScrollListView : UIBehaviour
 
     private List<ScrollListCell> m_CellList = null;
 
+    private bool m_initialized = false;
     private void Initialize()
     {
         m_CellList = ListPool<ScrollListCell>.Get();
+        // 初始化每个 cell 的 location
+        m_initialized = true;
+    }
+
+    private void FindBordCellIndex(int axis)
+    {
+        if (axis == 0)
+        {
+        }
+        else if (axis == 1)
+        {
+        }
     }
 
     #region ---------------- Unity 消息 ----------------------
 
     protected override void Awake()
     {
+        Initialize();
     }
 
     private void Update()
@@ -205,6 +196,48 @@ public class ScrollListView : UIBehaviour
     #endregion ---------------- Unity 消息 ----------------------
 
     #region ---------------- API ----------------------
+    public void Refresh()
+    {
+        ClearCellList();
+        for (int i = 0; i < 15; i++)
+        {
+            CreateCellData(i, 1);
+        }
+
+        float offset_x = m_Padding.top;
+        float offset_y = m_Padding.left;
+
+        for (int i = 0; i < m_CellList.Count; i++)
+        {
+            ScrollListCell cell = m_CellList[i];
+            if (m_Horizontal) offset_x += cell.width;
+            if (m_Vertical) offset_y += cell.height;
+            cell.location = new Vector2(offset_x, offset_y);
+
+            cell.UpdateLocation();
+
+            offset_x += m_Spacing.x;
+            offset_y += m_Spacing.y;
+        }
+
+        SetNormalizedPosition(0, 0);
+        SetNormalizedPosition(0, 1);
+    }
+
+    public void ClearCellList()
+    {
+        m_CellList.Clear();
+    }
+
+    public void CreateCellData(int index, int type)
+    {
+        print("创建了一个");
+        Transform celltrans = Instantiate<GameObject>(prefab, transform, false).transform;
+        ScrollListCell cell = celltrans.GetComponent<ScrollListCell>();
+        cell.Init(index, type);
+        m_CellList.Add(cell);
+    }
+
     public void BindCellDisplayCallback()
     {
     }
@@ -224,15 +257,17 @@ public class ScrollListView : UIBehaviour
     /// <param name="axis">The axis to set: 0 for horizontal, 1 for vertical.</param>
     public void SetNormalizedPosition(float value, int axis)
     {
-        if(axis == 0)
+        if (axis == 0)
         {
             m_NormalizedPosition.x = value;
+            // 根据 normalized position 计算出 2d position
+            m_2DPosition.x = CalculatePositoinX(value);
         }
-        else if(axis == 1)
+        else if (axis == 1)
         {
             m_NormalizedPosition.y = value;
+            m_2DPosition.y = CalculatePositionY(value);
         }
-
     }
     #endregion ---------------- API ----------------------
 }
