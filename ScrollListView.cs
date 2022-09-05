@@ -161,6 +161,10 @@ public class ScrollListView : UIBehaviour
         m_CellList = ListPool<ScrollListCell>.Get();
         // 初始化每个 cell 的 location
         m_initialized = true;
+
+        // 设置宽高都为 dirty 以使其初始化
+        m_DirtyHorizontal = true;
+        m_DirtyVertical = true;
     }
 
     private void FindBordCellIndex(int axis)
